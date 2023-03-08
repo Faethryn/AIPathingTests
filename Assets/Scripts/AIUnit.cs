@@ -6,7 +6,7 @@ using UnityEngine.AI;
 public class AIUnit : MonoBehaviour
 {
 
-    public Vector3 _destination;
+    public Transform _destination;
 
     [SerializeField]
     private Vector3 _ReachableDestination;
@@ -15,6 +15,8 @@ public class AIUnit : MonoBehaviour
     private float _range = 10f;
     [SerializeField]
     private float _reachedRange = 0.2f;
+
+    private Vector3 _formationOffset;
 
 
     enum UnitState
@@ -39,21 +41,35 @@ public class AIUnit : MonoBehaviour
     {
         if( _state == UnitState.Moving )
         {
-          if( ( Vector3.Distance(this.transform.position, _ReachableDestination) <= _reachedRange ))
+            RecalculateReachableDestination();
+
+            if ( ( Vector3.Distance(this.transform.position, _ReachableDestination) <= _reachedRange ))
             {
                 _state = UnitState.Idle;
                 this.GetComponent<NavMeshAgent>().enabled = false;
                 this.GetComponent<NavMeshObstacle>().enabled = true;
+               
 
 
             }
         }
+
+        if(_state == UnitState.InFormation)
+        {
+
+            RecalculateCirclePosition(_formationOffset);
+            
+
+
+             
+        }
         
+       
 
     }
 
 
-    public void SetFollowLocation(Vector3 newDestination)
+    public void SetFollowLocation(Transform newDestination)
     {
         _state = UnitState.Moving;
         _destination = newDestination;
@@ -68,18 +84,14 @@ public class AIUnit : MonoBehaviour
 
     }
 
-    public void SetFormationLocation(Vector3 newDestination)
-    {
-        _state = UnitState.InFormation;
-        _destination = newDestination;
-        RecalculateReachableDestination();
-    }
+   
+   
 
     private void RecalculateReachableDestination()
     {
         NavMeshHit hit;
 
-        if(NavMesh.SamplePosition(_destination, out hit, _range, NavMesh.AllAreas))
+        if(NavMesh.SamplePosition(_destination.position, out hit, _range, NavMesh.AllAreas))
         {
             _ReachableDestination = hit.position;
             this.GetComponent<NavMeshAgent>().enabled = true;
@@ -97,15 +109,31 @@ public class AIUnit : MonoBehaviour
         _range = newRange;
     }
 
-    public void SetFormationDestination(Vector3 newDestination)
+    public void SetFormationDestination(Transform newDestination, Vector3 offset)
     {
         _state = UnitState.InFormation;
         _destination = newDestination;
-
-        RecalculateReachableDestination();
+        _formationOffset = offset;
+        RecalculateCirclePosition(offset);
 
 
     }
 
+    private void RecalculateCirclePosition(Vector3 offset)
+    {
+
+
+        NavMeshHit hit;
+
+        if (NavMesh.SamplePosition(_destination.position + offset, out hit, _range, NavMesh.AllAreas))
+        {
+            _ReachableDestination = hit.position;
+            this.GetComponent<NavMeshAgent>().enabled = true;
+            this.GetComponent<NavMeshObstacle>().enabled = false;
+
+            this.GetComponent<NavMeshAgent>().SetDestination(_ReachableDestination);
+
+        }
+    }
 
 }

@@ -83,6 +83,7 @@ public class AIDirector : MonoBehaviour
         {
 
             _state = FormationState.Waiting;
+            SetWaiting();
         }
 
         if (Input.GetKeyDown(KeyCode.F))
@@ -94,7 +95,7 @@ public class AIDirector : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.C))
         {
             _state = FormationState.Circle;
-
+            SetCircleLocation();
 
         }
 
@@ -120,7 +121,7 @@ public class AIDirector : MonoBehaviour
 
         if (_state == FormationState.Circle)
         {
-            SetCircleLocation();
+           
         }
 
         if (_state == FormationState.Cone)
@@ -133,6 +134,8 @@ public class AIDirector : MonoBehaviour
             UpdateFollowLocation();
         }
 
+        
+
        
     }
 
@@ -141,7 +144,7 @@ public class AIDirector : MonoBehaviour
         
         for (int currentID = 0; currentID < _unitList.Count; currentID++)
         {
-            _unitList[currentID].SetFollowLocation(_cursorTransform.position);
+            _unitList[currentID].SetFollowLocation(_cursorTransform);
         }
     }
 
@@ -149,7 +152,7 @@ public class AIDirector : MonoBehaviour
     {
         for (int currentID = 0; currentID < _unitList.Count; currentID++)
         {
-            _unitList[currentID].SetFollowLocation(_cursorTransform.position);
+            _unitList[currentID].SetFollowLocation(_cursorTransform);
         }
     }
 
@@ -168,14 +171,25 @@ public class AIDirector : MonoBehaviour
             //Debug.Log(xOffset);
             //Debug.Log(yOffset);
           
-            Vector3 newPosition = (new Vector3(xOffset, 0, yOffset) + _cursorTransform.position);
+            Vector3 newPosition = (new Vector3(xOffset, 0, yOffset) );
            // Debug.Log(newPosition);
 
-            _unitList[i].SetFormationDestination(newPosition);
+            _unitList[i].SetFormationDestination( _cursorTransform ,newPosition );
 
         }
 
 
+    }
+
+    private void SetWaiting()
+    {
+        for (int i = 0; i < _unitList.Count; i++)
+        {
+
+
+            _unitList[i].StopFormation();
+
+        }
     }
 
     private void SetRectangleLocation(bool xAxis)
