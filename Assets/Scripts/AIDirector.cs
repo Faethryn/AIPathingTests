@@ -69,6 +69,8 @@ public class AIDirector : MonoBehaviour
        
         StateChecks();
         StateUpdates();
+        CoroutineRotation();
+
     }
 
     private void StateChecks()
@@ -84,6 +86,7 @@ public class AIDirector : MonoBehaviour
 
             _state = FormationState.Waiting;
             SetWaiting();
+            StopCoroutines();
         }
 
         if (Input.GetKeyDown(KeyCode.F))
@@ -95,6 +98,8 @@ public class AIDirector : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.C))
         {
             _state = FormationState.Circle;
+            StopCoroutines();
+
             SetCircleLocation();
 
         }
@@ -165,17 +170,16 @@ public class AIDirector : MonoBehaviour
 
         for(int i = 0; i < _unitList.Count; i++)
         {
-            float xOffset = radius * Mathf.Cos(i * radianIncrementPerPoint);
-            float yOffset = radius * Mathf.Sin(i * radianIncrementPerPoint);
 
-            //Debug.Log(xOffset);
-            //Debug.Log(yOffset);
-          
-            Vector3 newPosition = (new Vector3(xOffset, 0, yOffset) );
-           // Debug.Log(newPosition);
+            if (runningCoroutine == null)
+            {
+                runningCoroutine = CalculateCirclePosition(i, radius, radianIncrementPerPoint);
+                StartCoroutine(runningCoroutine);
+            }
+            else
+                _calculationQueue.Enqueue(CalculateCirclePosition(i, radius, radianIncrementPerPoint));
 
-            _unitList[i].SetFormationDestination( _cursorTransform ,newPosition );
-
+           
         }
 
 
@@ -202,4 +206,50 @@ public class AIDirector : MonoBehaviour
 
     }
 
+    IEnumerator CalculateCirclePosition(int index, float radius, float radianIncrementPerPoint)
+    {
+
+        float xOffset = radius * Mathf.Cos(index * radianIncrementPerPoint);
+        float yOffset = radius * Mathf.Sin(index * radianIncrementPerPoint);
+
+        //Debug.Log(xOffset);
+        //Debug.Log(yOffset);
+
+        Vector3 newPosition = (new Vector3(xOffset, 0, yOffset));
+        // Debug.Log(newPosition);
+
+        
+          
+            
+
+        _unitList[index].SetFormationDestination(_cursorTransform, newPosition);
+
+        runningCoroutine = null;
+        if (_calculationQueue.Count > 0)
+        {
+            runningCoroutine = _calculationQueue.Dequeue();
+            StartCoroutine(runningCoroutine);
+        }
+     
+
+        yield return null;
+    }
+
+
+    IEnumerator runningCoroutine = null;
+    private Queue<IEnumerator> _calculationQueue = new Queue<IEnumerator>();
+
+    
+
+    private void CoroutineRotation()
+    {
+      
+    }
+
+    private void StopCoroutines()
+    {
+        _calculationQueue.Clear();
+        if (runningCoroutine != null)
+            StopCoroutine(runningCoroutine);
+    }
 }
