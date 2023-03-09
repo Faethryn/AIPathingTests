@@ -41,7 +41,6 @@ public class AIUnit : MonoBehaviour
     {
         if( _state == UnitState.Moving )
         {
-            RecalculateReachableDestination();
 
             if ( ( Vector3.Distance(this.transform.position, _ReachableDestination) <= _reachedRange ))
             {
@@ -50,6 +49,11 @@ public class AIUnit : MonoBehaviour
                 this.GetComponent<NavMeshObstacle>().enabled = true;
                
 
+
+            }
+            else
+            {
+                RecalculateReachableDestination();
 
             }
         }
