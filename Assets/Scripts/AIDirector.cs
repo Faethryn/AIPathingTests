@@ -17,6 +17,15 @@ public class AIDirector : MonoBehaviour
     [SerializeField]
     private float _lengthOfOneSide = 2;
 
+    [SerializeField]
+    private float _RectSpacing = 5;
+
+    [SerializeField]
+    private float _coneAngle = 0.523599f; //30 degrees
+
+    [SerializeField]
+    private float _radiusPerConeLayer = 0.3f; //onions have layers
+
     enum FormationState
     {
         Waiting,
@@ -104,14 +113,19 @@ public class AIDirector : MonoBehaviour
 
         }
 
-        if (Input.GetKeyDown(KeyCode.V))
-        {
-            _state = FormationState.Cone;
+        //if (Input.GetKeyDown(KeyCode.V))
+        //{
+        //    _state = FormationState.Cone;
+        //    StopCoroutines();
 
-        }
+        //    SetConeLocation();
+
+        //}
         if (Input.GetKeyDown(KeyCode.R))
         {
             _state = FormationState.Rectangle;
+            StopCoroutines();
+            SetRectangleLocation();
 
         }
     }
@@ -185,6 +199,46 @@ public class AIDirector : MonoBehaviour
 
     }
 
+    private void SetConeLocation()
+    {
+       
+
+            //if (runningCoroutine == null)
+            //{
+            //    runningCoroutine = CalculateConePosition(i, radiusPerLayer , currentLayer, fibonacciStart);
+            //    StartCoroutine(runningCoroutine);
+            //}
+            //else
+            //    _calculationQueue.Enqueue(CalculateConePosition(i, radiusPerLayer, currentLayer, fibonacciStart));
+
+
+        
+
+
+    }
+
+    private void SetRectangleLocation()
+    {
+        int unitsPerRow = (int)Mathf.Floor(Mathf.Sqrt(_unitList.Count));
+        float width = _RectSpacing * unitsPerRow;
+
+        float spacing = width / unitsPerRow;
+
+        for(int i = 0; i < _unitList.Count; i++)
+        {
+
+            if (runningCoroutine == null)
+            {
+                runningCoroutine = CalculateRectanglePosition(i, unitsPerRow, spacing, width);
+                StartCoroutine(runningCoroutine);
+            }
+            else
+                _calculationQueue.Enqueue(CalculateRectanglePosition(i, unitsPerRow,spacing, width));
+
+        }
+        
+    }
+
     private void SetWaiting()
     {
         for (int i = 0; i < _unitList.Count; i++)
@@ -196,21 +250,17 @@ public class AIDirector : MonoBehaviour
         }
     }
 
-    private void SetRectangleLocation(bool xAxis)
-    {
+   
 
-    }
-
-    private void SetConeLocation()
-    {
-
-    }
+   
 
     IEnumerator CalculateCirclePosition(int index, float radius, float radianIncrementPerPoint)
     {
 
         float xOffset = radius * Mathf.Cos(index * radianIncrementPerPoint);
         float yOffset = radius * Mathf.Sin(index * radianIncrementPerPoint);
+
+
 
         //Debug.Log(xOffset);
         //Debug.Log(yOffset);
@@ -233,6 +283,88 @@ public class AIDirector : MonoBehaviour
      
 
         yield return null;
+    }
+
+    private   int Fib(int n)
+    {
+        if (n <= 1)
+        {
+            return n;
+        }
+        else
+        {
+            return Fib(n - 1) + Fib(n - 2);
+        }
+    }
+
+    IEnumerator CalculateConePosition(int index, float radiusPerLayer, int currentLayer, int currentFibonacci)
+    {
+        float currentLayerIndex = index - Fib(currentFibonacci);
+        float currentLayerIncrementAngle = _coneAngle / Fib(Fib(currentFibonacci));
+
+        float xOffset = radiusPerLayer * currentLayer * Mathf.Cos(currentLayerIndex *currentLayerIncrementAngle);
+        float yOffset = radiusPerLayer * currentLayer * Mathf.Sin(index * currentLayerIncrementAngle);
+
+        //Debug.Log(xOffset);
+        //Debug.Log(yOffset);
+
+        Vector3 newPosition = (new Vector3(xOffset, 0, yOffset));
+        // Debug.Log(newPosition);
+
+
+
+
+
+        _unitList[index].SetFormationDestination(_cursorTransform, newPosition);
+
+        runningCoroutine = null;
+        if (_calculationQueue.Count > 0)
+        {
+            runningCoroutine = _calculationQueue.Dequeue();
+            StartCoroutine(runningCoroutine);
+        }
+
+
+        yield return null;
+    }
+
+
+
+    IEnumerator CalculateRectanglePosition(int index, int columns, float spacing, float rectWidth)
+    {
+        Vector2 offsets = CalcPosition(index, columns, spacing);
+
+      
+
+            offsets = offsets - new Vector2(rectWidth / 2f, rectWidth/2f);
+
+
+        Vector3 newPosition = (new Vector3(offsets.x, 0, offsets.y));
+        // Debug.Log(newPosition);
+
+
+
+
+
+        _unitList[index].SetFormationDestination(_cursorTransform, newPosition);
+
+        runningCoroutine = null;
+        if (_calculationQueue.Count > 0)
+        {
+            runningCoroutine = _calculationQueue.Dequeue();
+            StartCoroutine(runningCoroutine);
+        }
+
+
+        yield return null;
+    }
+
+
+    Vector2 CalcPosition(int index, int columns, float width) // call t$$anonymous$$s func for all your objects
+    {
+        float posX = (index % columns) * width;
+        float posY = (index / columns) * width;
+        return new Vector2(posX, posY);
     }
 
 

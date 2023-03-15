@@ -18,6 +18,8 @@ public class AIUnit : MonoBehaviour
 
     private Vector3 _formationOffset;
 
+   
+
 
     enum UnitState
     {
@@ -125,17 +127,23 @@ public class AIUnit : MonoBehaviour
 
     private void RecalculateCirclePosition(Vector3 offset)
     {
-
+        
 
         NavMeshHit hit;
 
         if (NavMesh.SamplePosition(_destination.position + offset, out hit, _range, NavMesh.AllAreas))
         {
             _ReachableDestination = hit.position;
+           
+            
             this.GetComponent<NavMeshAgent>().enabled = true;
             this.GetComponent<NavMeshObstacle>().enabled = false;
 
             this.GetComponent<NavMeshAgent>().SetDestination(_ReachableDestination);
+
+            
+            
+           
 
         }
     }

@@ -8654,6 +8654,9 @@ MonoBehaviour:
   _cursorTransform: {fileID: 1474459318}
   _rangeIncrementPerRow: 0.7
   _lengthOfOneSide: 0.5
+  _RectSpacing: 0.7
+  _coneAngle: 0.523599
+  _radiusPerConeLayer: 0.3
 --- !u!4 &1378378304
 Transform:
   m_ObjectHideFlags: 0
