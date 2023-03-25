@@ -26,13 +26,16 @@ public class AIDirector : MonoBehaviour
     [SerializeField]
     private float _radiusPerConeLayer = 0.3f; //onions have layers
 
+    private Vector3 _selectionPosition;
+
     enum FormationState
     {
         Waiting,
         SimpleFollow,
         Circle,
         Rectangle,
-        Cone
+        Cone,
+        ConeSelection
     }
 
     private FormationState _state;
@@ -86,8 +89,24 @@ public class AIDirector : MonoBehaviour
     {
         if (Input.GetMouseButtonDown(0))
         {
+            if(_state == FormationState.ConeSelection)
+            {
+                _state = FormationState.Cone;
+                StopCoroutines();
 
+                Vector3 targetOffset = Vector3.Normalize( _cursorTransform.position  - _selectionPosition );
+
+                Debug.Log(targetOffset);
+                float angle = Mathf.Deg2Rad * (Vector3.SignedAngle(targetOffset, Vector3.right, Vector3.up));
+                Debug.Log(angle);
+
+                SetConeLocation(angle);
+            }
+            else
+            {
             StartFollow();
+
+            }
         }
 
         if (Input.GetMouseButtonDown(1))
@@ -115,10 +134,8 @@ public class AIDirector : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.V))
         {
-            _state = FormationState.Cone;
-            StopCoroutines();
-
-            SetConeLocation();
+            _state = FormationState.ConeSelection;
+          _selectionPosition = _cursorTransform.position;
 
         }
 
@@ -201,7 +218,7 @@ public class AIDirector : MonoBehaviour
 
     }
 
-    private void SetConeLocation()
+    private void SetConeLocation(float angleOffset)
     {
 
         int amountOfLayers = Mathf.CeilToInt(Mathf.Sqrt(_unitList.Count));
@@ -213,11 +230,11 @@ public class AIDirector : MonoBehaviour
 
             if (runningCoroutine == null)
             {
-                runningCoroutine = CalculateConePosition(i, _radiusPerConeLayer, currentLayer, _coneAngle);
+                runningCoroutine = CalculateConePosition(i, _radiusPerConeLayer, currentLayer, _coneAngle, angleOffset);
                 StartCoroutine(runningCoroutine);
             }
             else
-                _calculationQueue.Enqueue(CalculateConePosition(i, _radiusPerConeLayer, currentLayer,_coneAngle));
+                _calculationQueue.Enqueue(CalculateConePosition(i, _radiusPerConeLayer, currentLayer,_coneAngle, angleOffset));
             if ((i+1) >= (int)Mathf.Pow(currentLayer + 1, 2))
             {
                 currentLayer++;
@@ -325,7 +342,7 @@ public class AIDirector : MonoBehaviour
         }
     }
 
-    IEnumerator CalculateConePosition(int index, float radiusPerLayer, int layerIndex, float MaxAngle)
+    IEnumerator CalculateConePosition(int index, float radiusPerLayer, int layerIndex, float MaxAngle, float angleOffset)
     {
         int unitsInLayer = SumOfUnitsForLayer(layerIndex);
          float anglePerUnitInLayer = MaxAngle / unitsInLayer;
@@ -333,7 +350,7 @@ public class AIDirector : MonoBehaviour
         int unitsInPreviousLayers = (int)Mathf.Pow(layerIndex, 2);
         int indexInCurrentLayer = index - unitsInPreviousLayers;
 
-        float currentAngle = (anglePerUnitInLayer * indexInCurrentLayer) - (MaxAngle/2);
+        float currentAngle = (anglePerUnitInLayer * indexInCurrentLayer) - (MaxAngle/2) + angleOffset;
 
         float radius = radiusPerLayer * (layerIndex + 1);
 
