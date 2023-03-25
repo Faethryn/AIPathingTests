@@ -113,14 +113,16 @@ public class AIDirector : MonoBehaviour
 
         }
 
-        //if (Input.GetKeyDown(KeyCode.V))
-        //{
-        //    _state = FormationState.Cone;
-        //    StopCoroutines();
+        if (Input.GetKeyDown(KeyCode.V))
+        {
+            _state = FormationState.Cone;
+            StopCoroutines();
 
-        //    SetConeLocation();
+            SetConeLocation();
 
-        //}
+        }
+
+
         if (Input.GetKeyDown(KeyCode.R))
         {
             _state = FormationState.Rectangle;
@@ -201,8 +203,28 @@ public class AIDirector : MonoBehaviour
 
     private void SetConeLocation()
     {
-       
 
+        int amountOfLayers = Mathf.CeilToInt(Mathf.Sqrt(_unitList.Count));
+
+        int currentLayer = 0;
+
+        for(int i = 0; i < _unitList.Count; i++)
+        {
+
+            if (runningCoroutine == null)
+            {
+                runningCoroutine = CalculateConePosition(i, _radiusPerConeLayer, currentLayer, _coneAngle);
+                StartCoroutine(runningCoroutine);
+            }
+            else
+                _calculationQueue.Enqueue(CalculateConePosition(i, _radiusPerConeLayer, currentLayer,_coneAngle));
+            if ((i+1) >= (int)Mathf.Pow(currentLayer + 1, 2))
+            {
+                currentLayer++;
+            }
+
+
+        }
             //if (runningCoroutine == null)
             //{
             //    runningCoroutine = CalculateConePosition(i, radiusPerLayer , currentLayer, fibonacciStart);
@@ -215,6 +237,12 @@ public class AIDirector : MonoBehaviour
         
 
 
+    }
+
+
+    private int SumOfUnitsForLayer(int layer)
+    {
+        return ((layer * 2) + 1);
     }
 
     private void SetRectangleLocation()
@@ -297,16 +325,20 @@ public class AIDirector : MonoBehaviour
         }
     }
 
-    IEnumerator CalculateConePosition(int index, float radiusPerLayer, int currentLayer, int currentFibonacci)
+    IEnumerator CalculateConePosition(int index, float radiusPerLayer, int layerIndex, float MaxAngle)
     {
-        float currentLayerIndex = index - Fib(currentFibonacci);
-        float currentLayerIncrementAngle = _coneAngle / Fib(Fib(currentFibonacci));
+        int unitsInLayer = SumOfUnitsForLayer(layerIndex);
+         float anglePerUnitInLayer = MaxAngle / unitsInLayer;
 
-        float xOffset = radiusPerLayer * currentLayer * Mathf.Cos(currentLayerIndex *currentLayerIncrementAngle);
-        float yOffset = radiusPerLayer * currentLayer * Mathf.Sin(index * currentLayerIncrementAngle);
+        int unitsInPreviousLayers = (int)Mathf.Pow(layerIndex, 2);
+        int indexInCurrentLayer = index - unitsInPreviousLayers;
 
-        //Debug.Log(xOffset);
-        //Debug.Log(yOffset);
+        float currentAngle = (anglePerUnitInLayer * indexInCurrentLayer) - (MaxAngle/2);
+
+        float radius = radiusPerLayer * (layerIndex + 1);
+
+        float xOffset = radius * Mathf.Cos(currentAngle);
+        float yOffset = radius * Mathf.Sin(currentAngle);
 
         Vector3 newPosition = (new Vector3(xOffset, 0, yOffset));
         // Debug.Log(newPosition);
